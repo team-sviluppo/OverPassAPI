@@ -143,7 +143,7 @@ string? GeoJSon = new OverPassAPI(BBox, Query, "http://locahost:8082/api/interpr
 The [OpenStreetMap (OSM) project](www.openstreetmap.org) has collected an enormous amount of free spatial data and the database is growing every day. Many people want to use this data for their own GIS projects but have been hindered by the use of a non-standard data format in the OSM project. 
 **All coordinates are unprojected [WGS84 (EPSG:4326)](https://epsg.io/4326)**
 
-netOverPassAPI Class to has classes to query OpenStreetMap data mapped according to the Tags to be used for OverPass:
+OverPassAPI Class to has classes to query OpenStreetMap data mapped according to the Tags to be used for OverPass:
 
 ```C#
 
