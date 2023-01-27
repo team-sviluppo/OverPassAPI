@@ -1,4 +1,4 @@
-﻿# netOverPassAPI
+﻿# OverPassAPI
 
 This library performs overpass queries to extract geographic geometries in GeoJSon from OpenStreetMap.
 
