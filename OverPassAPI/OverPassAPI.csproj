@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ReleaseVersion>1.0</ReleaseVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>OverPassAPI</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="NetTopologySuite.IO.GeoJSON" />
+    <None Remove="NetTopologySuite.Features" />
+    <None Remove="OsmSharp" />
+    <None Remove="OsmSharp.Geo" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite.IO.GeoJSON" Version="3.0.0" />
+    <PackageReference Include="NetTopologySuite.Features" Version="2.1.0" />
+  </ItemGroup>
+</Project>
