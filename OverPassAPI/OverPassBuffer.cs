@@ -41,11 +41,12 @@ namespace OverPass
 		{
 			get
 			{
-				if (this.Features != null)
+                List<NetTopologySuite.Features.Feature>? features = this.Features;
+                if (features != null)
 				{
 					NetTopologySuite.Features.FeatureCollection? fColl = new();
 
-					foreach (NetTopologySuite.Features.Feature f in this.Features)
+					foreach (NetTopologySuite.Features.Feature f in features)
 					{
 						NetTopologySuite.Features.Feature newF = f;
 						newF.Geometry = f.Geometry.Buffer(this.Buffer * 0.00001, 8);

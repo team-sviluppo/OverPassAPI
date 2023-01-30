@@ -11,6 +11,7 @@ Dictionary<string, List<string>>? Query = new()
     { "highway", new List<string>() { "track", "residential", "tertiary", "path" } }
 };
 
-OverPassAPI OApi = new(OverPassUtility.DeSerializeGeometry(geometry), Query, true);
+OverPassBuffer OApi = new(OverPassUtility.DeSerializeGeometry(geometry), Query, true);
+List<NetTopologySuite.Features.Feature>? Features = OApi.Features;
 string geojson = OApi.GeoJSon;
-Console.WriteLine(geojson);
+Console.WriteLine("hello world");
