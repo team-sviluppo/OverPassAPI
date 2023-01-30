@@ -5,7 +5,7 @@ This library performs overpass queries to extract geographic geometries in GeoJS
 ## [Install](https://www.nuget.org/packages/OverPassAPI/)
 
 ```bash
-dotnet add package OverPassAPI --version 1.0.0
+dotnet add package OverPassAPI --version 1.0.2
 ```
 
 ## Usage
@@ -164,7 +164,7 @@ services:
 ```
 After starting the container, you can use one of the constructors to set the address of the new server and get better performance
 ```C#
-string? GeoJSon = new OverPassAPI(BBox, Query, "http://locahost:8082/api/interpreter").GeoJSon;
+string? GeoJSon = new OverPassAPI(BBox, Query, "http://locahost:8082").GeoJSon;
 ```
 
 ## Tags
