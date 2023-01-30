@@ -95,24 +95,23 @@ namespace OverPass
             }
         }
 
-        private async Task<string?> RunOverPassQuery()
+        private static async Task<string?> RunOverPassQuery(string url, string query)
         {
-            using HttpClient client = new();
-            string? url = $"{this.OverPassUrl}";
-            string? b = this.Body;
 
-            if (b != null)
+            var handler = new SocketsHttpHandler
             {
-                var body = new Dictionary<string, string>
-                {
-                    {"data", $"{this.QueryStart}{b}{this.QueryEnd}"}
-                };
+                PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+            };
 
-                using HttpResponseMessage response = await client.PostAsync(url, new FormUrlEncodedContent(body));
-                return await response.Content.ReadAsStringAsync();
-            }
-            else
-                return null;
+            using HttpClient client = new(handler);
+            var body = new Dictionary<string, string>
+            {
+                {"data", $"{query}"}
+            };
+
+            using HttpResponseMessage response = await client.PostAsync(url, new FormUrlEncodedContent(body));
+            return await response.Content.ReadAsStringAsync();
+            
         }
 
         protected Root? Response
@@ -121,12 +120,19 @@ namespace OverPass
             {
                 try
                 {
-                    Task<string?> r = this.RunOverPassQuery();
-                    if (r != null)
+                    string? b = this.Body;
+                    if (b != null && this.OverPassUrl != null)
                     {
-                        string? res = r.Result;
-                        if (res != null)
-                            return OverPassUtility.JSonDeserializeResponse(res);
+                        string q = $"{this.QueryStart}{b}{this.QueryEnd}";
+                        Task<string?> r = RunOverPassQuery(this.OverPassUrl, q);
+                        if (r != null)
+                        {
+                            string? res = r.Result;
+                            if (res != null)
+                                return OverPassUtility.JSonDeserializeResponse(res);
+                            else
+                                return null;
+                        }
                         else
                             return null;
                     }
