@@ -85,6 +85,31 @@ NetTopologySuite.Features.FeatureCollection? featuresAll = new OverPassAPI(BBox,
 string? GeoJSon = new OverPassAPI(BBox).GeoJSon;
 ```
 
+## Run By Geometry
+
+It is possible to filter OpenStreetMap data by setting a GeoJSon Geometry as a parameter.
+The result will be included in the geometry intersection with the geometry filter set.
+
+```C#
+
+using OverPass;
+using OverPass.Utility;
+
+string geometry = "{\"type\": \"Polygon\",\"coordinates\": " +
+                  "[[[7.321217387935907,45.71137875194013]," +
+                  "[7.325801094114396,45.71137875194013],[7.325801094114396,45.71457268228047]," +
+                  "[7.321217387935907,45.71457268228047],[7.321217387935907,45.71137875194013]]]}";
+
+Dictionary<string, List<string>>? Query = new()
+{
+    { "highway", new List<string>() { "track", "residential", "tertiary", "path" } }
+};
+
+OverPassAPI OApi = new(OverPassUtility.DeSerializeGeometry(geometry), Query, true);
+string geojson = OApi.GeoJSon;
+
+```
+
 ## Buffer
 
 If you want to read geometries with a buffer of **X** meters, the *OverPassBuffer* class exists.
