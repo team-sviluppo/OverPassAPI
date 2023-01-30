@@ -105,7 +105,7 @@ namespace OverPass
             {
                 var body = new Dictionary<string, string>
                 {
-                    {"data", $"{this.QueryStart}{this.Body}{this.QueryEnd}"}
+                    {"data", $"{this.QueryStart}{b}{this.QueryEnd}"}
                 };
 
                 using HttpResponseMessage response = await client.PostAsync(url, new FormUrlEncodedContent(body));
