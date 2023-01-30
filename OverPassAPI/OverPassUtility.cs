@@ -31,6 +31,27 @@ namespace OverPass.Utility
             }
         }
 
+        public static NetTopologySuite.Geometries.Geometry DeSerializeGeometry(string geometry)
+        {
+            var serializer = GeoJsonSerializer.Create();
+            using (var stringReader = new StringReader(geometry))
+            using (var jsonReader = new JsonTextReader(stringReader))
+            {
+                return serializer.Deserialize<NetTopologySuite.Geometries.Geometry>(jsonReader);
+            }
+        }
+
+        public static string SerializeGeometry(NetTopologySuite.Geometries.Geometry? geometry)
+        {
+            var serializer = GeoJsonSerializer.Create();
+            using (var stringWriter = new StringWriter())
+            using (var jsonWriter = new JsonTextWriter(stringWriter))
+            {
+                serializer.Serialize(jsonWriter, geometry);
+                return stringWriter.ToString();
+            }
+        }
+
         public static NetTopologySuite.Features.FeatureCollection? FeatureCollection(List<NetTopologySuite.Features.Feature>? features)
         {
             if (features != null)

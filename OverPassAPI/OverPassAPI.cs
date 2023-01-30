@@ -25,10 +25,17 @@ namespace OverPass
 
         private List<NetTopologySuite.Features.Feature>? ListFeatures { get; set; } = new();
 
+        public bool IsIntersects { get; set; } = true;
+        public NetTopologySuite.Geometries.Geometry? Filter { get; set; }
+
         public OverPassAPI(string bbox)
         {
             this.BBox = bbox;
+            this.Init(bbox);
+        }
 
+        private void Init(string bbox)
+        {
             /** Point */
             this.Places = new(bbox, TagType.PLACES);
             this.PoI = new(bbox, TagType.POI);
@@ -48,7 +55,37 @@ namespace OverPass
             this.Water = new(bbox, TagType.WATER);
         }
 
-        public OverPassAPI(string bbox, Dictionary<string, List<string>>? query) : this(bbox)
+        private void SetUpUrl(string overpassUrl)
+        {
+            string url = $"{overpassUrl}/api/interpreter";
+
+            if (this.Places != null)
+                this.Places.OverPassUrl = url;
+            if (this.PoI != null)
+                this.PoI.OverPassUrl = url;
+            if (this.PoFW != null)
+                this.PoFW.OverPassUrl = url;
+            if (this.Natural != null)
+                this.Natural.OverPassUrl = url;
+            if (this.Traffic != null)
+                this.Traffic.OverPassUrl = url;
+            if (this.Transport != null)
+                this.Transport.OverPassUrl = url;
+            if (this.Roads != null)
+                this.Roads.OverPassUrl = url;
+            if (this.Railways != null)
+                this.Railways.OverPassUrl = url;
+            if (this.Waterways != null)
+                this.Waterways.OverPassUrl = url;
+            if (this.Buildings != null)
+                this.Buildings.OverPassUrl = url;
+            if (this.Landuse != null)
+                this.Landuse.OverPassUrl = url;
+            if (this.Water != null)
+                this.Water.OverPassUrl = url;
+        }
+
+        private void SetUpQuery(Dictionary<string, List<string>>? query)
         {
             this.Query = query;
 
@@ -78,32 +115,34 @@ namespace OverPass
                 this.Water.Query = query;
         }
 
+        public OverPassAPI(string bbox, Dictionary<string, List<string>>? query) : this(bbox)
+        {
+            this.SetUpQuery(query);
+        }
+
         public OverPassAPI(string bbox, Dictionary<string, List<string>>? query, string overpassUrl) : this(bbox, query)
         {
-            if (this.Places != null)
-                this.Places.OverPassUrl = overpassUrl;
-            if (this.PoI != null)
-                this.PoI.OverPassUrl = overpassUrl;
-            if (this.PoFW != null)
-                this.PoFW.OverPassUrl = overpassUrl;
-            if (this.Natural != null)
-                this.Natural.OverPassUrl = overpassUrl;
-            if (this.Traffic != null)
-                this.Traffic.OverPassUrl = overpassUrl;
-            if (this.Transport != null)
-                this.Transport.OverPassUrl = overpassUrl;
-            if (this.Roads != null)
-                this.Roads.OverPassUrl = overpassUrl;
-            if (this.Railways != null)
-                this.Railways.OverPassUrl = overpassUrl;
-            if (this.Waterways != null)
-                this.Waterways.OverPassUrl = overpassUrl;
-            if (this.Buildings != null)
-                this.Buildings.OverPassUrl = overpassUrl;
-            if (this.Landuse != null)
-                this.Landuse.OverPassUrl = overpassUrl;
-            if (this.Water != null)
-                this.Water.OverPassUrl = overpassUrl;
+            this.SetUpUrl(overpassUrl);
+        }
+
+        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query)
+        {
+            this.Filter = filter;
+            NetTopologySuite.Geometries.Envelope Env = filter.EnvelopeInternal;
+            string bbox = $"{Env.MinY},{Env.MinX},{Env.MaxY},{Env.MaxX}";
+            this.BBox = bbox;
+            this.Init(bbox);
+            this.SetUpQuery(query);
+        }
+
+        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query, bool isIntersects) : this(filter, query)
+        {
+            this.IsIntersects = isIntersects; 
+        }
+
+        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query, bool isIntersects, string overpassUrl) : this(filter, query, isIntersects)
+        {
+            this.SetUpUrl(overpassUrl);
         }
 
         private void AddFeatures(List<NetTopologySuite.Features.Feature>? f)
@@ -126,6 +165,8 @@ namespace OverPass
         {
             get
             {
+                List<NetTopologySuite.Features.Feature>? features = new();
+
                 if (this.Places != null)
                     this.AddFeatures(this.Places.Features);
 
@@ -162,7 +203,24 @@ namespace OverPass
                 if (this.Water != null)
                     this.AddFeatures(this.Water.Features);
 
-                return this.ListFeatures;
+                /** Intersection all geometry */
+                if (this.IsIntersects && this.Filter != null && this.ListFeatures != null)
+                {
+                    foreach (NetTopologySuite.Features.Feature f in this.ListFeatures)
+                    {
+                        NetTopologySuite.Features.Feature fI = f;
+                        fI.Geometry = f.Geometry.Intersection(this.Filter);
+                        if (!fI.Geometry.IsEmpty)
+                            features.Add(fI);
+                    }
+                }
+                else
+                    features = this.ListFeatures;
+
+                if (features != null && features.Count > 0)
+                    return features;
+                else
+                    return null;
             }
         }
     }

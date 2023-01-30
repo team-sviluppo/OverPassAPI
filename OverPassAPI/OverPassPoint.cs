@@ -294,7 +294,7 @@ namespace OverPass
         }
 
         /** Get attributes from respons eopenstreetmap */
-        protected static AttributesTable GetProperties(Element e)
+        protected AttributesTable GetProperties(Element e)
         {
             AttributesTable attributes = new AttributesTable();
             attributes.Add("id", e.id);

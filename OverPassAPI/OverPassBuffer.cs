@@ -22,6 +22,21 @@ namespace OverPass
             this.Buffer = buffer;
         }
 
+        public OverPassBuffer(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query) : base(filter, query)
+        {
+            
+        }
+
+        public OverPassBuffer(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query, bool isIntersects) : base(filter, query)
+        {
+            
+        }
+
+        public OverPassBuffer(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query, bool isIntersects, string overpassUrl) : base(filter, query, isIntersects)
+        {
+            
+        }
+
         public override NetTopologySuite.Features.FeatureCollection? FeatureCollection
 		{
 			get
