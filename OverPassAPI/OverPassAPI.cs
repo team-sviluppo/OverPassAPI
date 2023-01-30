@@ -1,4 +1,5 @@
-﻿using NetTopologySuite.IO;
+﻿using System.Globalization;
+using NetTopologySuite.IO;
 using Newtonsoft.Json;
 using OverPass.Utility;
 
@@ -129,9 +130,8 @@ namespace OverPass
         {
             this.Filter = filter;
             NetTopologySuite.Geometries.Envelope Env = filter.EnvelopeInternal;
-            string bbox = $"{Env.MinY},{Env.MinX},{Env.MaxY},{Env.MaxX}";
-            this.BBox = bbox;
-            this.Init(bbox);
+            this.BBox = $"{Env.MinY.ToString(CultureInfo.InvariantCulture)},{Env.MinX.ToString(CultureInfo.InvariantCulture)},{Env.MaxY.ToString(CultureInfo.InvariantCulture)},{Env.MaxX.ToString(CultureInfo.InvariantCulture)}"; ;
+            this.Init(this.BBox);
             this.SetUpQuery(query);
         }
 
