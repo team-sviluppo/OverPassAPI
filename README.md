@@ -5,7 +5,7 @@ This library performs overpass queries to extract geographic geometries in GeoJS
 ## [Install](https://www.nuget.org/packages/OverPassAPI/)
 
 ```bash
-dotnet add package OverPassAPI --version 1.0.4
+dotnet add package OverPassAPI --version 1.0.6
 ```
 
 ## Usage
