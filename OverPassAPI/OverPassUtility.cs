@@ -1,6 +1,8 @@
 ﻿using System;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
+using OverPass;
+using static System.Reflection.Metadata.BlobBuilder;
 
 namespace OverPass.Utility
 {
@@ -63,6 +65,20 @@ namespace OverPass.Utility
             }
             else
                 return null;
+        }
+
+        public static Dictionary<string, List<string>>? AddDictionary(Dictionary<string, List<string>>? source,
+                                                                       Dictionary<string, List<string>>? destination)
+        {
+            if (source != null)
+            {
+                source.AsParallel().ForAll(c =>
+                {
+                    if (!destination!.ContainsKey(c.Key))
+                        destination.Add(c.Key, c.Value);
+                });
+            }
+            return destination;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
 using OverPass.Utility;
@@ -37,18 +38,13 @@ namespace OverPass
         {
             get
             {
-                if (this.Tags != null)
+                List<string>? q = new();
+                foreach (OTag t in this.Tags![this.Type])
                 {
-                    List<string>? q = new();
-                    foreach (OTag t in this.Tags[this.Type])
-                    {
-                        if (!q.Contains(t.KeyTag))
-                            q.Add(t.KeyTag);
-                    }
-                    return q;
+                    if (!q.Contains(t.KeyTag))
+                        q.Add(t.KeyTag);
                 }
-                else
-                    return null;
+                return q;
             }
         }
 
@@ -56,18 +52,38 @@ namespace OverPass
         {
             get
             {
-                if (this.Tags != null)
+                List<string>? q = new();
+                foreach (OTag t in this.Tags![this.Type])
                 {
-                    List<string>? q = new();
-                    foreach (OTag t in this.Tags[this.Type])
-                    {
-                        if (!q.Contains(t.ValueTag))
-                            q.Add(t.ValueTag);
-                    }
-                    return q;
+                    if (!q.Contains(t.ValueTag))
+                        q.Add(t.ValueTag);
                 }
-                else
-                    return null;
+                return q;
+            }
+        }
+
+        public Dictionary<string, List<string>>? AllTags
+        {
+            get
+            {
+                Dictionary<string, List<string>>? q = new();
+
+                foreach (var t in this.Tags![this.Type])
+                {
+                    // Console.WriteLine($"{month.Key}: {month.Value}");
+                    if (!q!.ContainsKey(t.KeyTag))
+                        q.Add(t.KeyTag, new() { "*" });
+                }
+
+                /*
+                this.Tags![this.Type].AsParallel().ForAll(c =>
+                {
+                    if (!q!.ContainsKey(c.KeyTag))
+                        q.Add(c.KeyTag, new() {"*"});
+                });
+                */
+
+                return q;
             }
         }
 
@@ -75,23 +91,18 @@ namespace OverPass
         {
             get
             {
-                if (this.Tags != null)
-                {
-                    string? q = null;
+                string? q = null;
 
-                    foreach (OTag t in this.Tags[this.Type])
-                    {
-                        if (this.Query == null && t.ValueTag == "*")
-                            q += t.Query;
-                        else if (this.Query != null &&
-                                 this.Query.ContainsKey(t.KeyTag) &&
-                                 this.Query[t.KeyTag].Contains(t.ValueTag))
-                            q += t.Query;
-                    }
-                    return q;
+                foreach (OTag t in this.Tags![this.Type])
+                {
+                    if (this.Query == null && t.ValueTag == "*")
+                        q += t.Query;
+                    else if (this.Query != null &&
+                                this.Query.ContainsKey(t.KeyTag) &&
+                                this.Query[t.KeyTag].Contains(t.ValueTag))
+                        q += t.Query;
                 }
-                else
-                    return null;
+                return q;
             }
         }
 

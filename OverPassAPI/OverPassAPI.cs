@@ -1,6 +1,8 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Globalization;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
+using OverPass;
 using OverPass.Utility;
 
 namespace OverPass
@@ -60,60 +62,58 @@ namespace OverPass
         {
             string url = $"{overpassUrl}/api/interpreter";
 
-            if (this.Places != null)
-                this.Places.OverPassUrl = url;
-            if (this.PoI != null)
-                this.PoI.OverPassUrl = url;
-            if (this.PoFW != null)
-                this.PoFW.OverPassUrl = url;
-            if (this.Natural != null)
-                this.Natural.OverPassUrl = url;
-            if (this.Traffic != null)
-                this.Traffic.OverPassUrl = url;
-            if (this.Transport != null)
-                this.Transport.OverPassUrl = url;
-            if (this.Roads != null)
-                this.Roads.OverPassUrl = url;
-            if (this.Railways != null)
-                this.Railways.OverPassUrl = url;
-            if (this.Waterways != null)
-                this.Waterways.OverPassUrl = url;
-            if (this.Buildings != null)
-                this.Buildings.OverPassUrl = url;
-            if (this.Landuse != null)
-                this.Landuse.OverPassUrl = url;
-            if (this.Water != null)
-                this.Water.OverPassUrl = url;
+            this.Places!.OverPassUrl = url;
+            this.PoI!.OverPassUrl = url;
+            this.PoFW!.OverPassUrl = url;
+            this.Natural!.OverPassUrl = url;
+            this.Traffic!.OverPassUrl = url;
+            this.Transport!.OverPassUrl = url;
+            this.Roads!.OverPassUrl = url;
+            this.Railways!.OverPassUrl = url;
+            this.Waterways!.OverPassUrl = url;
+            this.Buildings!.OverPassUrl = url;
+            this.Landuse!.OverPassUrl = url;
+            this.Water!.OverPassUrl = url;
+        }
+
+        public Dictionary<string, List<string>>? AllTags
+        {
+            get
+            {
+                Dictionary<string, List<string>>? q = new();
+
+                q = OverPassUtility.AddDictionary(this.Places!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.PoI!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.PoFW!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Natural!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Traffic!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Transport!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Roads!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Railways!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Waterways!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Buildings!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Landuse!.AllTags, q);
+                q = OverPassUtility.AddDictionary(this.Water!.AllTags, q);
+
+                return q;
+            }
         }
 
         private void SetUpQuery(Dictionary<string, List<string>>? query)
         {
             this.Query = query;
-
-            if (this.Places != null)
-                this.Places.Query = query;
-            if (this.PoI != null)
-                this.PoI.Query = query;
-            if (this.PoFW != null)
-                this.PoFW.Query = query;
-            if (this.Natural != null)
-                this.Natural.Query = query;
-            if (this.Traffic != null)
-                this.Traffic.Query = query;
-            if (this.Transport != null)
-                this.Transport.Query = query;
-            if (this.Roads != null)
-                this.Roads.Query = query;
-            if (this.Railways != null)
-                this.Railways.Query = query;
-            if (this.Waterways != null)
-                this.Waterways.Query = query;
-            if (this.Buildings != null)
-                this.Buildings.Query = query;
-            if (this.Landuse != null)
-                this.Landuse.Query = query;
-            if (this.Water != null)
-                this.Water.Query = query;
+            this.Places!.Query = query;
+            this.PoI!.Query = query;
+            this.PoFW!.Query = query;
+            this.Natural!.Query = query;
+            this.Traffic!.Query = query;
+            this.Transport!.Query = query;
+            this.Roads!.Query = query;
+            this.Railways!.Query = query;
+            this.Waterways!.Query = query;
+            this.Buildings!.Query = query;
+            this.Landuse!.Query = query;
+            this.Water!.Query = query;
         }
 
         public OverPassAPI(string bbox, Dictionary<string, List<string>>? query) : this(bbox)
@@ -167,41 +167,18 @@ namespace OverPass
             {
                 List<NetTopologySuite.Features.Feature>? features = new();
 
-                if (this.Places != null)
-                    this.AddFeatures(this.Places.Features);
-
-                if (this.PoI != null)
-                    this.AddFeatures(this.PoI.Features);
-
-                if (this.PoFW != null)
-                    this.AddFeatures(this.PoFW.Features);
-
-                if (this.Natural != null)
-                    this.AddFeatures(this.Natural.Features);
-
-                if (this.Traffic != null)
-                    this.AddFeatures(this.Traffic.Features);
-
-                if (this.Transport != null)
-                    this.AddFeatures(this.Transport.Features);
-
-                if (this.Roads != null)
-                    this.AddFeatures(this.Roads.Features);
-
-                if (this.Railways != null)
-                    this.AddFeatures(this.Railways.Features);
-
-                if (this.Waterways != null)
-                    this.AddFeatures(this.Waterways.Features);
-
-                if (this.Buildings != null)
-                    this.AddFeatures(this.Buildings.Features);
-
-                if (this.Landuse != null)
-                    this.AddFeatures(this.Landuse.Features);
-
-                if (this.Water != null)
-                    this.AddFeatures(this.Water.Features);
+                this.AddFeatures(this.Places!.Features);
+                this.AddFeatures(this.PoI!.Features);
+                this.AddFeatures(this.PoFW!.Features);
+                this.AddFeatures(this.Natural!.Features);
+                this.AddFeatures(this.Traffic!.Features);
+                this.AddFeatures(this.Transport!.Features);
+                this.AddFeatures(this.Roads!.Features);
+                this.AddFeatures(this.Railways!.Features);
+                this.AddFeatures(this.Waterways!.Features);
+                this.AddFeatures(this.Buildings!.Features);
+                this.AddFeatures(this.Landuse!.Features);
+                this.AddFeatures(this.Water!.Features);
 
                 /** Intersection all geometry */
                 if (this.IsIntersects && this.Filter != null && this.ListFeatures != null)

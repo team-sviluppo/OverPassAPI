@@ -12,6 +12,10 @@ Dictionary<string, List<string>>? Query = new()
 };
 
 OverPassBuffer OApi = new(OverPassUtility.DeSerializeGeometry(geometry), Query, true);
+
+Dictionary<string, List<string>>? aT = OApi.AllTags;
+
+
 List<NetTopologySuite.Features.Feature>? Features = OApi.Features;
 string geojson = OApi.GeoJSon;
 Console.WriteLine("hello world");
