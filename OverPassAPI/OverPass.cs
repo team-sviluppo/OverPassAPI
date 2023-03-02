@@ -1,20 +1,28 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Drawing;
+using System.Globalization;
+using NetTopologySuite.Features;
+using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OverPass.Utility;
 
 namespace OverPass
 {
     public class OverPass
     {
-		protected string QueryStart = "[out:json][timeout:25];(";
-		protected string QueryEnd = ");out geom;>;out body qt;";
+        protected string QueryStart = "[out:json][timeout:25];(";
+        protected string QueryEnd = ");out geom;>;out body qt;";
         public string? OverPassUrl { get; set; } = "https://overpass-api.de/api/interpreter";
-        public string BBox { get; set; } = "";
+        public string BBox { get; set; } = "41.888221345535,12.484095096588,41.895009993745,12.495414018631"; // Rome
         public Dictionary<string, List<string>>? Query;
-        public TagType Type { get; set; } = TagType.PLACES;
+        public TagType Type { get; set; } = TagType.ALL;
         public Dictionary<TagType, List<OTag>>? Tags;
+        public NetTopologySuite.Geometries.Geometry? Filter { get; set; }
+        public List<OTag> AllTags { get; set; } = new List<OTag>();
 
         public OverPass(string bbox)
         {
@@ -23,12 +31,25 @@ namespace OverPass
 
         public OverPass(string bbox, Dictionary<string, List<string>>? query) : this(bbox)
         {
+            this.BBox = bbox;
+        }
+
+        public OverPass(NetTopologySuite.Geometries.Geometry filter)
+        {
+            this.Filter = filter;
+            NetTopologySuite.Geometries.Envelope Env = filter.EnvelopeInternal;
+            this.BBox = String.Format(CultureInfo.GetCultureInfo("en-US"), "{0},{1},{2},{3}", Env.MinY, Env.MinX, Env.MaxY, Env.MaxX);
+        }
+
+        public OverPass(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query) : this(filter)
+        {
             this.Query = query;
         }
 
-        public OverPass(string bbox, Dictionary<string, List<string>>? query, string? overpassUrl) : this(bbox, query)
+        public void BaseUrl(string overpassUrl)
         {
-            this.OverPassUrl = overpassUrl;
+            string url = $"{overpassUrl}/api/interpreter";
+            this.OverPassUrl = url;
         }
 
         /**
@@ -62,48 +83,37 @@ namespace OverPass
             }
         }
 
-        public Dictionary<string, List<string>>? AllTags
+        
+
+        public Dictionary<TagType, List<OTag>>? AllTagsDictonary
         {
-            get
-            {
-                Dictionary<string, List<string>>? q = new();
-
-                foreach (var t in this.Tags![this.Type])
+            get {
+                return new()
                 {
-                    // Console.WriteLine($"{month.Key}: {month.Value}");
-                    if (!q!.ContainsKey(t.KeyTag))
-                        q.Add(t.KeyTag, new() { "*" });
-                }
-
-                /*
-                this.Tags![this.Type].AsParallel().ForAll(c =>
-                {
-                    if (!q!.ContainsKey(c.KeyTag))
-                        q.Add(c.KeyTag, new() {"*"});
-                });
-                */
-
-                return q;
+                    { this.Type, this.AllTags }
+                };
             }
+            
         }
 
-        private string? Body
+        private string? GetBody()
         {
-            get
-            {
-                string? q = null;
+            string? q = null;
 
-                foreach (OTag t in this.Tags![this.Type])
+            foreach (OTag t in this.Tags![this.Type])
+            {
+                if ((this.Query == null || this.Query.Count == 0) && t.ValueTag == "*")
+                    q += t.Query;
+                else
                 {
-                    if (this.Query == null && t.ValueTag == "*")
-                        q += t.Query;
-                    else if (this.Query != null &&
-                                this.Query.ContainsKey(t.KeyTag) &&
-                                this.Query[t.KeyTag].Contains(t.ValueTag))
-                        q += t.Query;
+                    List<string>? value = null;
+                    bool keyExists = this.Query!.TryGetValue(t.KeyTag, out value);
+                    if (keyExists && value != null)
+                        if (value!.Contains(t.ValueTag)) q += t.Query;
                 }
-                return q;
             }
+
+            return q;
         }
 
         private static async Task<string?> RunOverPassQuery(string url, string query)
@@ -111,7 +121,7 @@ namespace OverPass
 
             var handler = new SocketsHttpHandler
             {
-                PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
             };
 
             using HttpClient client = new(handler);
@@ -121,41 +131,79 @@ namespace OverPass
             };
 
             using HttpResponseMessage response = await client.PostAsync(url, new FormUrlEncodedContent(body));
-            return await response.Content.ReadAsStringAsync();
-            
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsStringAsync();
+            else
+                throw new Exception("Non sono riuscito a leggere le geometrie da OpenstreetMap");
         }
 
-        protected Root? Response
+        protected async Task<Root?> Response()
         {
-            get
+            string? b = this.GetBody();
+
+            if (b != null && this.OverPassUrl != null)
             {
+                string q = $"{this.QueryStart}{b}{this.QueryEnd}";
                 try
                 {
-                    string? b = this.Body;
-                    if (b != null && this.OverPassUrl != null)
-                    {
-                        string q = $"{this.QueryStart}{b}{this.QueryEnd}";
-                        Task<string?> r = RunOverPassQuery(this.OverPassUrl, q);
-                        if (r != null)
-                        {
-                            string? res = r.Result;
-                            if (res != null)
-                                return OverPassUtility.JSonDeserializeResponse(res);
-                            else
-                                return null;
-                        }
-                        else
-                            return null;
-                    }
-                    else
-                        return null;
+                    string? r = await RunOverPassQuery(this.OverPassUrl, q);
+                    return OverPassUtility.JSonDeserializeResponse(r!);
                 }
                 catch (Exception e)
                 {
+                    // Log Error
                     Console.WriteLine(e.Message);
                     return null;
                 }
             }
+            else
+                return null;
+        }
+
+        public virtual async Task<List<NetTopologySuite.Features.Feature>?> Features()
+        {
+            Root? resp = await this.Response();
+            List<NetTopologySuite.Features.Feature> features = new();
+            if (resp != null && resp.elements != null)
+            {
+                foreach (Element e in resp.elements)
+                {
+                    NetTopologySuite.Features.Feature? f = null;
+
+                    if (e.geometry != null)
+                    {
+                        if (e.type == "node")
+                        {
+                            /** Point */
+                            NetTopologySuite.Geometries.Point geom = (NetTopologySuite.Geometries.Point)new(OverPassUtility.GetPoint(e));
+                            f = new(geom, OverPassUtility.GetProperties(e));
+                        }
+                        else if (e.type == "way")
+                        {
+                            NetTopologySuite.Geometries.Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e);
+                            NetTopologySuite.Geometries.LineString line = new(coordinates);
+
+                            if (line.IsClosed)
+                            {
+                                /** Polygon */
+                                NetTopologySuite.Geometries.LinearRing lineRing = (NetTopologySuite.Geometries.LinearRing)new(coordinates);
+                                NetTopologySuite.Geometries.Polygon poly = (NetTopologySuite.Geometries.Polygon)new(lineRing);
+                                f = new(poly, OverPassUtility.GetProperties(e));
+                            }
+                            else
+                                /** Linestring */
+                                f = new(line, OverPassUtility.GetProperties(e));
+                        }
+
+                        f!.BoundingBox = OverPassUtility.GetBBox(e);
+                    }
+
+                    if (f != null)
+                        features.Add(f);
+                }
+            }
+
+            return features;
         }
     }
 }

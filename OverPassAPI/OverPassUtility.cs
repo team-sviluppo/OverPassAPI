@@ -1,4 +1,6 @@
 ﻿using System;
+using NetTopologySuite.Features;
+using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
 using OverPass;
@@ -67,18 +69,77 @@ namespace OverPass.Utility
                 return null;
         }
 
-        public static Dictionary<string, List<string>>? AddDictionary(Dictionary<string, List<string>>? source,
-                                                                       Dictionary<string, List<string>>? destination)
+        /** Get attributes from respons eopenstreetmap */
+        public static AttributesTable GetProperties(Element e)
         {
-            if (source != null)
-            {
-                source.AsParallel().ForAll(c =>
+            AttributesTable attributes = new AttributesTable();
+            attributes.Add("id", e.id);
+            if (e.tags != null)
+                foreach (var p in e.tags.GetType().GetProperties())
                 {
-                    if (!destination!.ContainsKey(c.Key))
-                        destination.Add(c.Key, c.Value);
-                });
+                    var value = p.GetValue(e.tags, null);
+                    if (value != null)
+                        attributes.Add(p.Name, value);
+                }
+
+            return attributes;
+        }
+
+        /** Get attributes from response openstreetmap */
+        public static Coordinate GetPoint(Element e)
+        {
+            return new(Convert.ToDouble(e.lon), Convert.ToDouble(e.lat));
+        }
+
+        public static NetTopologySuite.Geometries.Coordinate[]? GetCoordinates(Element e)
+        {
+            List<NetTopologySuite.Geometries.Coordinate>? points = new();
+
+            if (e.geometry != null)
+            {
+                foreach (Geometry g in e.geometry)
+                {
+                    NetTopologySuite.Geometries.Coordinate p = new(Convert.ToDouble(g.lon), Convert.ToDouble(g.lat));
+                    points.Add(p);
+                }
+                return points.ToArray();
             }
-            return destination;
+            else
+                return null;
+        }
+
+        public static NetTopologySuite.Geometries.Envelope? GetBBox(Element e)
+        {
+            if (e.bounds != null)
+            {
+                NetTopologySuite.Geometries.Coordinate minCoordinate = new(Convert.ToDouble(e.bounds.minlon), Convert.ToDouble(e.bounds.minlat));
+                NetTopologySuite.Geometries.Coordinate maxCoordinate = new(Convert.ToDouble(e.bounds.maxlon), Convert.ToDouble(e.bounds.maxlat));
+                NetTopologySuite.Geometries.Envelope result = new(minCoordinate, maxCoordinate);
+                return result;
+            }
+            else
+                return null;
+        }
+
+        public static Dictionary<TagType, List<OTag>>? UnionTags(Dictionary<TagType, List<OTag>>? a, Dictionary<TagType, List<OTag>>? b)
+        {
+            if (b != null)
+            {
+                if (a == null)
+                    return b;
+                else
+                    foreach (var item in b)
+                    {
+                        List<OTag>? value = null;
+                        bool keyExists = a!.TryGetValue(item.Key, out value);
+                        if (!keyExists)
+                            a.Add(item.Key, new());
+                        if (item.Value != null)
+                            a[item.Key].AddRange(item.Value);
+                    }
+            }
+
+            return a;
         }
     }
 }

@@ -7,16 +7,12 @@ namespace OverPass
 {
     public class OverPassPoint : OverPass
     {
-        
+
         public OverPassPoint(string bbox) : base(bbox)
         {
         }
 
         public OverPassPoint(string bbox, Dictionary<string, List<string>>? query) : base(bbox, query)
-        {
-        }
-
-        public OverPassPoint(string bbox, Dictionary<string, List<string>>? query, string? overpassUrl) : base(bbox, query, overpassUrl)
         {
         }
 
@@ -26,6 +22,9 @@ namespace OverPass
             this.Tags = new();
 
             List<OTag> list = new List<OTag>();
+
+            
+
             switch (this.Type)
             {
                 case TagType.NATURAL:
@@ -293,62 +292,14 @@ namespace OverPass
             this.OverPassUrl = overpassUrl;
         }
 
-        /** Get attributes from respons eopenstreetmap */
-        protected AttributesTable GetProperties(Element e)
+        public virtual async Task<string> GeoJSon()
         {
-            AttributesTable attributes = new AttributesTable();
-            attributes.Add("id", e.id);
-            if (e.tags != null)
-                foreach (var p in e.tags.GetType().GetProperties())
-                {
-                    var value = p.GetValue(e.tags, null);
-                    if (value != null)
-                        attributes.Add(p.Name, value);
-                }
-
-            return attributes;
+            return OverPassUtility.SerializeFeatures(await this.FeaturesCollection());
         }
 
-        /** Get attributes from response openstreetmap */
-        protected static NetTopologySuite.Geometries.Coordinate GetPoint(Element e)
+        public virtual async Task<NetTopologySuite.Features.FeatureCollection?> FeaturesCollection()
         {
-            return new(Convert.ToDouble(e.lon), Convert.ToDouble(e.lat));
-        }
-
-        public virtual string GeoJSon
-        {
-            get => OverPassUtility.SerializeFeatures(this.FeatureCollection);
-        }
-
-        public virtual NetTopologySuite.Features.FeatureCollection? FeatureCollection
-        {
-            get => OverPassUtility.FeatureCollection(this.Features);
-        }
-
-        public virtual List<NetTopologySuite.Features.Feature>? Features
-        {
-            get
-            {
-                Root? resp = this.Response;
-                List<NetTopologySuite.Features.Feature>? features = new();
-                
-                if (resp != null && resp.elements != null)
-                {
-                    foreach (Element e in resp.elements)
-                    {
-                        if (e.type == "node")
-                        {
-                            NetTopologySuite.Geometries.Point geom = (NetTopologySuite.Geometries.Point)new(GetPoint(e));
-                            NetTopologySuite.Features.Feature? f = new(geom, GetProperties(e));
-                            features.Add(f);
-                        }
-                    }
-
-                    return features;
-                }
-                else
-                    return null;
-            }
+            return OverPassUtility.FeatureCollection(await this.Features());
         }
     }
 }

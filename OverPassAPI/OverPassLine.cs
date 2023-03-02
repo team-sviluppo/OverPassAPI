@@ -15,10 +15,6 @@ namespace OverPass
         {
         }
 
-        public OverPassLine(string bbox, Dictionary<string, List<string>>? query, string? overpassUrl) : base(bbox, query, overpassUrl)
-        {
-        }
-
         public OverPassLine(string bbox, TagType type) : base(bbox)
         {
             this.Type = type;
@@ -91,64 +87,6 @@ namespace OverPass
             this.OverPassUrl = overpassUrl;
         }
 
-        protected static NetTopologySuite.Geometries.Coordinate[]? GetCoordinates(Element e)
-        {
-            List<NetTopologySuite.Geometries.Coordinate>? points = new();
-
-            if (e.geometry != null)
-            {
-                foreach (Geometry g in e.geometry)
-                {
-                    NetTopologySuite.Geometries.Coordinate p = new(Convert.ToDouble(g.lon), Convert.ToDouble(g.lat));
-                    points.Add(p);
-                }
-                return points.ToArray();
-            }
-            else
-                return null;
-        }
-
-        protected static NetTopologySuite.Geometries.Envelope? GetBBox(Element e)
-        {
-            if (e.bounds != null)
-            {
-                NetTopologySuite.Geometries.Coordinate minCoordinate = new(Convert.ToDouble(e.bounds.minlon), Convert.ToDouble(e.bounds.minlat));
-                NetTopologySuite.Geometries.Coordinate maxCoordinate = new(Convert.ToDouble(e.bounds.maxlon), Convert.ToDouble(e.bounds.maxlat));
-                NetTopologySuite.Geometries.Envelope result = new(minCoordinate, maxCoordinate);
-                return result;
-            }
-            else
-                return null;
-        }
-
-        public override List<NetTopologySuite.Features.Feature>? Features
-        {
-            get
-            {
-                Root? resp = this.Response;
-                List<NetTopologySuite.Features.Feature>? features = new();
-
-                if (resp != null && resp.elements != null)
-                {
-                    foreach (Element e in resp.elements)
-                    {
-                        if (e.type == "way" && e.geometry != null)
-                        {
-                            NetTopologySuite.Geometries.LineString geom = (NetTopologySuite.Geometries.LineString)new(GetCoordinates(e));
-                            NetTopologySuite.Features.Feature? f = new(geom, GetProperties(e));
-                            NetTopologySuite.Geometries.Envelope? bbox = GetBBox(e);
-                            if (e != null)
-                                f.BoundingBox = GetBBox(e);
-                            features.Add(f);
-                        }
-                    }
-
-                    return features;
-                }
-                else
-                    return null;
-            }
-        }
     }
 }
 
