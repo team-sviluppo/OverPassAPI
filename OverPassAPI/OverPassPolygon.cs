@@ -10,10 +10,6 @@ public class OverPassPolygon : OverPassLine
     {
     }
 
-    public OverPassPolygon(string bbox, Dictionary<string, List<string>>? query, string? overpassUrl) : base(bbox, query, overpassUrl)
-    {
-    }
-
     public OverPassPolygon(string bbox, TagType type) : base(bbox)
     {
         this.Type = type;
@@ -22,7 +18,7 @@ public class OverPassPolygon : OverPassLine
         switch (this.Type)
         {
             case TagType.BUILDINGS:
-                list.Add(new(this.BBox, "building", "*"));
+                this.AllTags.Add(new(this.BBox, "building", "*"));
                 break;
             case TagType.LANDUSE:
                 list.Add(new(this.BBox, "landuse", "*"));
@@ -77,46 +73,6 @@ public class OverPassPolygon : OverPassLine
     public OverPassPolygon(string bbox, TagType type, Dictionary<string, List<string>>? query, string? overpassUrl) : this(bbox, type, query)
     {
         this.OverPassUrl = overpassUrl;
-    }
-
-    public override List<NetTopologySuite.Features.Feature>? Features
-    {
-        get
-        {
-            Root? resp = this.Response;
-            List<NetTopologySuite.Features.Feature>? features = new();
-
-            if (resp != null && resp.elements != null)
-            {
-                foreach (Element e in resp.elements)
-                {
-                    if (e.type == "way" && e.geometry != null)
-                    {
-                        NetTopologySuite.Features.Feature? f;
-                        NetTopologySuite.Geometries.Coordinate[]? coordinates = GetCoordinates(e);
-                        NetTopologySuite.Geometries.LineString line = new(coordinates);
-
-                        if (line.IsClosed)
-                        {
-                            NetTopologySuite.Geometries.LinearRing lineRing = (NetTopologySuite.Geometries.LinearRing)new(coordinates);
-                            NetTopologySuite.Geometries.Polygon poly = (NetTopologySuite.Geometries.Polygon)new(lineRing);
-                            f = new(poly, GetProperties(e));
-                        }
-                        else
-                            f = new(line, GetProperties(e));
-
-                        NetTopologySuite.Geometries.Envelope? bbox = GetBBox(e);
-                        if (e != null)
-                            f.BoundingBox = GetBBox(e);
-                        features.Add(f);
-                    }
-                }
-
-                return features;
-            }
-            else
-                return null;
-        }
     }
 }
 
