@@ -59,18 +59,13 @@ namespace OverPass
         {
             get
             {
-                if (this.Tags != null)
+                List<string>? q = new();
+                foreach (OTag t in this.Tags![this.Type])
                 {
-                    List<string>? q = new();
-                    foreach (OTag t in this.Tags[this.Type])
-                    {
-                        if (!q.Contains(t.KeyTag))
-                            q.Add(t.KeyTag);
-                    }
-                    return q;
+                    if (!q.Contains(t.KeyTag))
+                        q.Add(t.KeyTag);
                 }
-                else
-                    return null;
+                return q;
             }
         }
 
@@ -78,20 +73,17 @@ namespace OverPass
         {
             get
             {
-                if (this.Tags != null)
+                List<string>? q = new();
+                foreach (OTag t in this.Tags![this.Type])
                 {
-                    List<string>? q = new();
-                    foreach (OTag t in this.Tags[this.Type])
-                    {
-                        if (!q.Contains(t.ValueTag))
-                            q.Add(t.ValueTag);
-                    }
-                    return q;
+                    if (!q.Contains(t.ValueTag))
+                        q.Add(t.ValueTag);
                 }
-                else
-                    return null;
+                return q;
             }
         }
+
+        
 
         public Dictionary<TagType, List<OTag>>? AllTagsDictonary
         {

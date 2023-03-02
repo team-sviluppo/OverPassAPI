@@ -4,10 +4,9 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <ReleaseVersion>1.0</ReleaseVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>OverPassAPI</PackageId>
-    <PackageVersion>1.0.3</PackageVersion>
+    <PackageVersion>1.0.7</PackageVersion>
     <PackageLicenseExpression>
         MS-PL
     </PackageLicenseExpression>
@@ -19,6 +18,7 @@
     <Copyright>
         Copyright® 2023 Giuseppe Zileni
     </Copyright>
+    <ReleaseVersion>1.0.7</ReleaseVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

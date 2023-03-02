@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
+﻿using System;
 using System.Globalization;
-using NetTopologySuite.IO;
-using Newtonsoft.Json;
+using OverPass;
 using OverPass.Utility;
 
 namespace OverPass
