@@ -33,19 +33,20 @@ namespace OverPass
             this.Buffer = buffer;
         }
 
-        public override async Task<NetTopologySuite.Features.FeatureCollection?> FeatureCollection()
-		{
-		    List<NetTopologySuite.Features.Feature>? features = await this.Features();
-            NetTopologySuite.Features.FeatureCollection? fColl = new();
+        public override async Task<List<NetTopologySuite.Features.Feature>?> Features()
+        {
+            List<NetTopologySuite.Features.Feature>? features = await base.Features();
+            List<NetTopologySuite.Features.Feature>? result = new();
 
-			foreach (NetTopologySuite.Features.Feature f in features!)
-			{
-				NetTopologySuite.Features.Feature newF = f;
-				newF.Geometry = f.Geometry.Buffer(this.Buffer * 0.00001, 8);
-				fColl.Add(newF);
-			}
+            foreach (NetTopologySuite.Features.Feature f in features!)
+            {
+                NetTopologySuite.Features.Feature newF = f;
+                newF.Geometry = f.Geometry.Buffer(this.Buffer * 0.00001, 8);
+                result.Add(newF);
+            }
 
-            return fColl;
+            return result;
+
         }
     }
 }
