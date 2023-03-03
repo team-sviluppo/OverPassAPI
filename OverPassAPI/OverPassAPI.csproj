@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>OverPassAPI</PackageId>
-    <PackageVersion>1.0.7</PackageVersion>
+    <PackageVersion>1.0.8</PackageVersion>
     <PackageLicenseExpression>
         MS-PL
     </PackageLicenseExpression>
@@ -18,7 +18,7 @@
     <Copyright>
         Copyright® 2023 Giuseppe Zileni
     </Copyright>
-    <ReleaseVersion>1.0.7</ReleaseVersion>
+    <ReleaseVersion>1.0.8</ReleaseVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
