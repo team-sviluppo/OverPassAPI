@@ -65,14 +65,7 @@ public class OverPassPolygon : OverPassLine
         this.Tags.Add(this.Type, list);
     }
 
-    public OverPassPolygon(string bbox, TagType type, Dictionary<string, List<string>>? query) : this(bbox, type)
-    {
-        this.Query = query;
-    }
-
-    public OverPassPolygon(string bbox, TagType type, Dictionary<string, List<string>>? query, string? overpassUrl) : this(bbox, type, query)
-    {
-        this.OverPassUrl = overpassUrl;
-    }
+    public OverPassPolygon(string bbox, TagType type, Dictionary<string, List<string>>? query) : this(bbox, type) => this.Query = query;
+    public OverPassPolygon(string bbox, TagType type, Dictionary<string, List<string>>? query, string? overpassUrl) : this(bbox, type, query) => this.OverPassUrl = overpassUrl;
 }
 

@@ -5,6 +5,8 @@ using NetTopologySuite.IO;
 using Newtonsoft.Json;
 using OverPass;
 using static System.Reflection.Metadata.BlobBuilder;
+using ProjNet.CoordinateSystems;
+using ProjNet.CoordinateSystems.Transformations;
 
 namespace OverPass.Utility
 {
@@ -58,74 +60,127 @@ namespace OverPass.Utility
 
         public static NetTopologySuite.Features.FeatureCollection? FeatureCollection(List<NetTopologySuite.Features.Feature>? features)
         {
-            if (features != null)
+            if (features is not null)
             {
                 NetTopologySuite.Features.FeatureCollection fColl = new();
                 foreach (NetTopologySuite.Features.Feature f in features)
                     fColl.Add(f);
                 return fColl;
             }
-            else
-                return null;
+
+            return null;
         }
 
         /** Get attributes from respons eopenstreetmap */
         public static AttributesTable GetProperties(Element e)
         {
             AttributesTable attributes = new AttributesTable();
-            attributes.Add("id", e.id);
-            if (e.tags != null)
+            if (e.id is not null)
+                attributes.Add("id", e.id);
+            if (e.tags is not null)
                 foreach (var p in e.tags.GetType().GetProperties())
                 {
                     var value = p.GetValue(e.tags, null);
-                    if (value != null)
+                    if (value is not null)
                         attributes.Add(p.Name, value);
                 }
 
             return attributes;
         }
 
-        /** Get attributes from response openstreetmap */
-        public static Coordinate GetPoint(Element e)
+        public static GeometryFactory CreateGeometryFactory(int? code)
         {
-            return new(Convert.ToDouble(e.lon), Convert.ToDouble(e.lat));
+            int c = 3857;
+            if (code != null) c = (int)code;
+            return NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(c);
         }
 
-        public static NetTopologySuite.Geometries.Coordinate[]? GetCoordinates(Element e)
+        /** fetch data by OpenStreetMap Data */
+        public static async Task<string?> RunOverPassQuery(string url, string query)
+        {
+            var handler = new SocketsHttpHandler
+            {
+                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
+            };
+
+            using HttpClient client = new(handler);
+            var body = new Dictionary<string, string>
+            {
+                {"data", $"{query}"}
+            };
+
+            using HttpResponseMessage response = await client.PostAsync(url, new FormUrlEncodedContent(body));
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadAsStringAsync();
+            else
+                throw new Exception("Non sono riuscito a leggere le geometrie da OpenstreetMap");
+        }
+
+        /** convert coordinate from WGS84 (EPSG:4326) to EPSG:3857 */
+        public static Coordinate ConvertCoordinatesToWebMercator(double[] coords)
+        {
+            List<Coordinate> bounds = new();
+
+            /** convert from WGS84 (EPSG:4326) to EPSG:3857 */
+            var cs4326 = ProjNet.CoordinateSystems.GeographicCoordinateSystem.WGS84;
+            var cs3857 = ProjNet.CoordinateSystems.ProjectedCoordinateSystem.WebMercator;
+
+            // Transformation
+            var ctfac = new CoordinateTransformationFactory();
+            var trans = ctfac.CreateFromCoordinateSystems(cs4326, cs3857);
+
+            double[] fromPoint = new double[] { coords[0], coords[1] };
+            double[] toPoint = trans.MathTransform.Transform(fromPoint);
+            return new Coordinate(toPoint[0], toPoint[1]);
+        }
+
+        /** Get attributes from response openstreetmap */
+        public static Coordinate GetPoint(double[] coords, bool ToWebMercator)
+        {
+            if (ToWebMercator)
+                return ConvertCoordinatesToWebMercator(coords);
+            else
+                return new(coords[0], coords[1]);
+        }
+
+        /** get coordinate from element openstreetmap response */
+        public static NetTopologySuite.Geometries.Coordinate[]? GetCoordinates(Element e, bool ToWebMercator)
         {
             List<NetTopologySuite.Geometries.Coordinate>? points = new();
 
-            if (e.geometry != null)
+            if (e.geometry is not null)
             {
                 foreach (Geometry g in e.geometry)
                 {
-                    NetTopologySuite.Geometries.Coordinate p = new(Convert.ToDouble(g.lon), Convert.ToDouble(g.lat));
+                    double[]? coords = new double[] { Convert.ToDouble(g.lon), Convert.ToDouble(g.lat) };
+                    Coordinate p = GetPoint(coords, ToWebMercator);
                     points.Add(p);
                 }
                 return points.ToArray();
             }
-            else
-                return null;
+
+            return null;
         }
 
+        /** geo bbox */
         public static NetTopologySuite.Geometries.Envelope? GetBBox(Element e)
         {
-            if (e.bounds != null)
+            if (e.bounds is not null)
             {
                 NetTopologySuite.Geometries.Coordinate minCoordinate = new(Convert.ToDouble(e.bounds.minlon), Convert.ToDouble(e.bounds.minlat));
                 NetTopologySuite.Geometries.Coordinate maxCoordinate = new(Convert.ToDouble(e.bounds.maxlon), Convert.ToDouble(e.bounds.maxlat));
                 NetTopologySuite.Geometries.Envelope result = new(minCoordinate, maxCoordinate);
                 return result;
             }
-            else
-                return null;
+
+            return null;
         }
 
         public static Dictionary<TagType, List<OTag>>? UnionTags(Dictionary<TagType, List<OTag>>? a, Dictionary<TagType, List<OTag>>? b)
         {
-            if (b != null)
+            if (b is not null)
             {
-                if (a == null)
+                if (a is null)
                     return b;
                 else
                     foreach (var item in b)

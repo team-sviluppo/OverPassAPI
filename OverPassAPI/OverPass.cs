@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Globalization;
+using System.Linq;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
@@ -23,16 +24,11 @@ namespace OverPass
         public Dictionary<TagType, List<OTag>>? Tags;
         public NetTopologySuite.Geometries.Geometry? Filter { get; set; }
         public List<OTag> AllTags { get; set; } = new List<OTag>();
+        public bool ToWebMercator { get; set; } = false;
+        public double Buffer { get; set; } = 10.0; /** meters */
 
-        public OverPass(string bbox)
-        {
-            this.BBox = bbox;
-        }
-
-        public OverPass(string bbox, Dictionary<string, List<string>>? query) : this(bbox)
-        {
-            this.BBox = bbox;
-        }
+        public OverPass(string bbox) => this.BBox = bbox;
+        public OverPass(string bbox, Dictionary<string, List<string>>? query) : this(bbox) => this.Query = query;
 
         public OverPass(NetTopologySuite.Geometries.Geometry filter)
         {
@@ -41,16 +37,24 @@ namespace OverPass
             this.BBox = String.Format(CultureInfo.GetCultureInfo("en-US"), "{0},{1},{2},{3}", Env.MinY, Env.MinX, Env.MaxY, Env.MaxX);
         }
 
-        public OverPass(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query) : this(filter)
-        {
-            this.Query = query;
-        }
+        public OverPass(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query) : this(filter) => this.Query = query;
 
         public void BaseUrl(string overpassUrl)
         {
             string url = $"{overpassUrl}/api/interpreter";
             this.OverPassUrl = url;
         }
+
+        public int SRCode
+        {
+            get
+            {
+                if (this.ToWebMercator)
+                    return 3857;
+                else
+                    return 4326;
+            }
+        } 
 
         /**
          * Get List of tag query
@@ -116,37 +120,16 @@ namespace OverPass
             return q;
         }
 
-        private static async Task<string?> RunOverPassQuery(string url, string query)
-        {
-
-            var handler = new SocketsHttpHandler
-            {
-                PooledConnectionLifetime = TimeSpan.FromMinutes(15)
-            };
-
-            using HttpClient client = new(handler);
-            var body = new Dictionary<string, string>
-            {
-                {"data", $"{query}"}
-            };
-
-            using HttpResponseMessage response = await client.PostAsync(url, new FormUrlEncodedContent(body));
-            if (response.IsSuccessStatusCode)
-                return await response.Content.ReadAsStringAsync();
-            else
-                throw new Exception("Non sono riuscito a leggere le geometrie da OpenstreetMap");
-        }
-
         protected async Task<Root?> Response()
         {
             string? b = this.GetBody();
 
-            if (b != null && this.OverPassUrl != null)
+            if (b is not null && this.OverPassUrl is not null)
             {
                 string q = $"{this.QueryStart}{b}{this.QueryEnd}";
                 try
                 {
-                    string? r = await RunOverPassQuery(this.OverPassUrl, q);
+                    string? r = await OverPassUtility.RunOverPassQuery(this.OverPassUrl, q);
                     return OverPassUtility.JSonDeserializeResponse(r!);
                 }
                 catch (Exception e)
@@ -160,51 +143,94 @@ namespace OverPass
                 return null;
         }
 
+        /** create geometries */
         public virtual async Task<List<NetTopologySuite.Features.Feature>?> Features()
         {
             Root? resp = await this.Response();
-            List<NetTopologySuite.Features.Feature> features = new();
-            if (resp != null && resp.elements != null)
+            if (resp is not null)
             {
-                foreach (Element e in resp.elements)
+
+                List<Element> nodes = resp!.elements!.Where(e => e.type == "node").ToList();
+                List<Element> ways = resp!.elements!.Where(e => e.type == "way").ToList();
+                List<Element> lines = ways.Where(e =>
                 {
-                    NetTopologySuite.Features.Feature? f = null;
+                    /** create array coordinates */
+                    NetTopologySuite.Geometries.Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
+                    NetTopologySuite.Geometries.LineString line = new(coordinates);
+                    return !line.IsClosed;
+                }).ToList();
 
-                    if (e.geometry != null)
+                List<Element> polys = ways.Except(lines).ToList();
+
+                /** get all points */
+                List<NetTopologySuite.Features.Feature>? features = nodes.Select(e =>
+                {
+                    GeometryFactory gf = OverPassUtility.CreateGeometryFactory(this.SRCode);
+                    NetTopologySuite.Features.Feature? f = new();
+                    AttributesTable properties = OverPassUtility.GetProperties(e);
+                    f.Attributes = properties;
+                    double[]? coords = new double[] { Convert.ToDouble(e.lon), Convert.ToDouble(e.lat) };
+                    NetTopologySuite.Geometries.Point geom = (NetTopologySuite.Geometries.Point)new(OverPassUtility.GetPoint(coords, this.ToWebMercator));
+                    f.Geometry = gf.CreateGeometry(geom);
+                    return f;
+                }).ToList();
+
+                /** get all lines and polygons */
+                List<NetTopologySuite.Features.Feature>? featuresLines = lines.Select(e =>
+                {
+                    GeometryFactory gf = OverPassUtility.CreateGeometryFactory(this.SRCode);
+                    NetTopologySuite.Features.Feature? f = new();
+                    AttributesTable properties = OverPassUtility.GetProperties(e);
+                    f.Attributes = properties;
+                    /** create array coordinates */
+                    NetTopologySuite.Geometries.Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
+                    NetTopologySuite.Geometries.LineString line = new(coordinates);
+                    f.Geometry = gf.CreateGeometry(line);
+                    f.BoundingBox = OverPassUtility.GetBBox(e);
+                    return f;
+                }).ToList();
+
+                List<NetTopologySuite.Features.Feature>? featuresPoly = polys.Select(e =>
+                {
+                    GeometryFactory gf = OverPassUtility.CreateGeometryFactory(this.SRCode);
+                    NetTopologySuite.Features.Feature? f = new();
+                    AttributesTable properties = OverPassUtility.GetProperties(e);
+                    f.Attributes = properties;
+                    /** create array coordinates */
+                    NetTopologySuite.Geometries.Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
+                    NetTopologySuite.Geometries.LinearRing lineRing = new(coordinates);
+                    NetTopologySuite.Geometries.Polygon poly = new(lineRing);
+                    f.Geometry = gf.CreateGeometry(poly);
+                    f.BoundingBox = OverPassUtility.GetBBox(e);
+                    return f;
+                }).ToList();
+
+                /** union features */
+                features.AddRange(featuresLines);
+                features.AddRange(featuresPoly);
+                /** remove empty geometries */
+                features = features.Where(f => !f.Geometry!.IsEmpty).ToList();
+
+                /** add buffer to features */
+                if (this.Buffer > 0)
+                {
+                    List<NetTopologySuite.Features.Feature>? featuresWithBuffer = features.Select(f =>
                     {
-                        if (e.type == "node")
-                        {
-                            /** Point */
-                            NetTopologySuite.Geometries.Point geom = (NetTopologySuite.Geometries.Point)new(OverPassUtility.GetPoint(e));
-                            f = new(geom, OverPassUtility.GetProperties(e));
-                        }
-                        else if (e.type == "way")
-                        {
-                            NetTopologySuite.Geometries.Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e);
-                            NetTopologySuite.Geometries.LineString line = new(coordinates);
-
-                            if (line.IsClosed)
-                            {
-                                /** Polygon */
-                                NetTopologySuite.Geometries.LinearRing lineRing = (NetTopologySuite.Geometries.LinearRing)new(coordinates);
-                                NetTopologySuite.Geometries.Polygon poly = (NetTopologySuite.Geometries.Polygon)new(lineRing);
-                                f = new(poly, OverPassUtility.GetProperties(e));
-                            }
-                            else
-                                /** Linestring */
-                                f = new(line, OverPassUtility.GetProperties(e));
-                        }
-
-                        f!.BoundingBox = OverPassUtility.GetBBox(e);
-                    }
-
-                    if (f != null)
-                        features.Add(f);
+                        f.Geometry = f.Geometry.Buffer(this.Buffer * 0.00001, 8);
+                        return f;
+                    }).ToList();
+                    return featuresWithBuffer;
                 }
+
+                return features;
             }
 
-            return features;
+            return null;
         }
+
+        public async virtual Task<string> GeoJSon() => OverPassUtility.SerializeFeatures(await this.FeatureCollection());
+        public async virtual Task<NetTopologySuite.Features.FeatureCollection?> FeatureCollection() => OverPassUtility.FeatureCollection(await this.Features());
+
     }
 }
 
