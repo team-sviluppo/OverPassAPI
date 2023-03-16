@@ -77,16 +77,8 @@ namespace OverPass
             this.Tags.Add(this.Type, list);
         }
 
-        public OverPassLine(string bbox, TagType type, Dictionary<string, List<string>>? query) : this(bbox, type)
-        {
-            this.Query = query;
-        }
-
-        public OverPassLine(string bbox, TagType type, Dictionary<string, List<string>>? query, string? overpassUrl) : this(bbox, type, query)
-        {
-            this.OverPassUrl = overpassUrl;
-        }
-
+        public OverPassLine(string bbox, TagType type, Dictionary<string, List<string>>? query) : this(bbox, type) => this.Query = query;
+        public OverPassLine(string bbox, TagType type, Dictionary<string, List<string>>? query, string? overpassUrl) : this(bbox, type, query) => this.OverPassUrl = overpassUrl;
     }
 }
 

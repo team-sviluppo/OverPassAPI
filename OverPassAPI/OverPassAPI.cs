@@ -21,31 +21,12 @@ namespace OverPass
         public OverPassPolygon? Landuse { get; set; }
         public OverPassPolygon? Water { get; set; }
 
-        public OverPassAPI(string bbox) : base(bbox)
-        {
-            this.Init(this.BBox);
-        }
-
-        public OverPassAPI(string bbox, Dictionary<string, List<string>>? query) : this(bbox)
-        {
-            this.Query = query;
-        }
-
-        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter) : base(filter)
-        {
-            this.Init(this.BBox);
-        }
-
-        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query) : this(filter)
-        {
-            this.Query = query;
-        }
-
-        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, string bbox) : base(bbox)
-        {
-            this.Init(bbox);
-        }
-
+        public OverPassAPI(string bbox) : base(bbox) => this.Init(this.BBox);
+        public OverPassAPI(string bbox, Dictionary<string, List<string>>? query) : this(bbox) => this.Query = query;
+        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter) : base(filter) => this.Init(this.BBox);
+        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query) : this(filter) => this.Query = query;
+        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, string bbox) : base(bbox) => this.Init(bbox);
+        
         private void Init(string bbox)
         {
             /** Point */
@@ -93,15 +74,6 @@ namespace OverPass
             };
         }
         
-        public async virtual Task<string> GeoJSon()
-        {
-            return OverPassUtility.SerializeFeatures(await this.FeatureCollection());
-        }
-
-        public async virtual Task<NetTopologySuite.Features.FeatureCollection?> FeatureCollection()
-        {
-            return OverPassUtility.FeatureCollection(await this.Features());
-        }
     }
 }
 
