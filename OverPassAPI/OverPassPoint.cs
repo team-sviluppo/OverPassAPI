@@ -23,8 +23,6 @@ namespace OverPass
 
             List<OTag> list = new List<OTag>();
 
-            
-
             switch (this.Type)
             {
                 case TagType.NATURAL:
@@ -282,25 +280,8 @@ namespace OverPass
             this.Tags.Add(this.Type, list);
         }
 
-        public OverPassPoint(string bbox, TagType type, Dictionary<string, List<string>>? query) : this(bbox, type)
-        {
-            this.Query = query;
-        }
-
-        public OverPassPoint(string bbox, TagType type, Dictionary<string, List<string>>? query, string? overpassUrl) : this(bbox, type, query)
-        {
-            this.OverPassUrl = overpassUrl;
-        }
-
-        public virtual async Task<string> GeoJSon()
-        {
-            return OverPassUtility.SerializeFeatures(await this.FeaturesCollection());
-        }
-
-        public virtual async Task<NetTopologySuite.Features.FeatureCollection?> FeaturesCollection()
-        {
-            return OverPassUtility.FeatureCollection(await this.Features());
-        }
+        public OverPassPoint(string bbox, TagType type, Dictionary<string, List<string>>? query) : this(bbox, type) => this.Query = query;
+        public OverPassPoint(string bbox, TagType type, Dictionary<string, List<string>>? query, string? overpassUrl) : this(bbox, type, query) => this.OverPassUrl = overpassUrl;
     }
 }
 

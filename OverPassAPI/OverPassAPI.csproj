@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>OverPassAPI</PackageId>
-    <PackageVersion>1.0.8</PackageVersion>
+    <PackageVersion>1.0.9</PackageVersion>
     <PackageLicenseExpression>
         MS-PL
     </PackageLicenseExpression>
@@ -18,7 +18,7 @@
     <Copyright>
         Copyright® 2023 Giuseppe Zileni
     </Copyright>
-    <ReleaseVersion>1.0.8</ReleaseVersion>
+    <ReleaseVersion>1.0.9</ReleaseVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -33,5 +33,6 @@
   <ItemGroup>
     <PackageReference Include="NetTopologySuite.IO.GeoJSON" Version="3.0.0" />
     <PackageReference Include="NetTopologySuite.Features" Version="2.1.0" />
+    <PackageReference Include="ProjNet" Version="2.0.0" />
   </ItemGroup>
 </Project>
