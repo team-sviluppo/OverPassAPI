@@ -1,10 +1,4 @@
-﻿using System.Collections.Generic;
-﻿using System;
-using System.Globalization;
-using OverPass;
-using OverPass.Utility;
-
-namespace OverPass
+﻿namespace OverPass
 {
     public class OverPassAPI : OverPass
 	{
@@ -23,10 +17,10 @@ namespace OverPass
 
         public OverPassAPI(string bbox) : base(bbox) => this.Init(this.BBox);
         public OverPassAPI(string bbox, Dictionary<string, List<string>>? query) : this(bbox) => this.Query = query;
-        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter) : base(filter) => this.Init(this.BBox);
+        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter) : base(filter!) => this.Init(this.BBox);
         public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query) : this(filter) => this.Query = query;
-        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, string bbox) : base(bbox) => this.Init(bbox);
-        
+        public OverPassAPI(NetTopologySuite.Geometries.Geometry filter, string bbox) : base(filter) => this.Init(bbox);
+
         private void Init(string bbox)
         {
             /** Point */

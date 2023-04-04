@@ -1,22 +1,18 @@
-﻿using System;
-using NetTopologySuite.Features;
+﻿using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
 using Newtonsoft.Json;
-using OverPass;
-using static System.Reflection.Metadata.BlobBuilder;
-using ProjNet.CoordinateSystems;
 using ProjNet.CoordinateSystems.Transformations;
 
 namespace OverPass.Utility
 {
-	public class OverPassUtility
+    public class OverPassUtility
 	{
 		public OverPassUtility()
 		{
 		}
 
-        public static Root JSonDeserializeResponse(string json)
+        public static Root? JSonDeserializeResponse(string json)
         {
             var serializer = GeoJsonSerializer.Create();
             using (var stringReader = new StringReader(json))
@@ -37,24 +33,13 @@ namespace OverPass.Utility
             }
         }
 
-        public static NetTopologySuite.Geometries.Geometry DeSerializeGeometry(string geometry)
+        public static NetTopologySuite.Geometries.Geometry? DeSerializeGeometry(string geometry)
         {
             var serializer = GeoJsonSerializer.Create();
             using (var stringReader = new StringReader(geometry))
             using (var jsonReader = new JsonTextReader(stringReader))
             {
                 return serializer.Deserialize<NetTopologySuite.Geometries.Geometry>(jsonReader);
-            }
-        }
-
-        public static string SerializeGeometry(NetTopologySuite.Geometries.Geometry? geometry)
-        {
-            var serializer = GeoJsonSerializer.Create();
-            using (var stringWriter = new StringWriter())
-            using (var jsonWriter = new JsonTextWriter(stringWriter))
-            {
-                serializer.Serialize(jsonWriter, geometry);
-                return stringWriter.ToString();
             }
         }
 
@@ -74,7 +59,7 @@ namespace OverPass.Utility
         /** Get attributes from respons eopenstreetmap */
         public static AttributesTable GetProperties(Element e)
         {
-            AttributesTable attributes = new AttributesTable();
+            AttributesTable attributes = new();
             if (e.id is not null)
                 attributes.Add("id", e.id);
             if (e.tags is not null)
@@ -144,9 +129,9 @@ namespace OverPass.Utility
         }
 
         /** get coordinate from element openstreetmap response */
-        public static NetTopologySuite.Geometries.Coordinate[]? GetCoordinates(Element e, bool ToWebMercator)
+        public static Coordinate[]? GetCoordinates(Element e, bool ToWebMercator)
         {
-            List<NetTopologySuite.Geometries.Coordinate>? points = new();
+            List<Coordinate>? points = new();
 
             if (e.geometry is not null)
             {
@@ -163,13 +148,13 @@ namespace OverPass.Utility
         }
 
         /** geo bbox */
-        public static NetTopologySuite.Geometries.Envelope? GetBBox(Element e)
+        public static Envelope? GetBBox(Element e)
         {
             if (e.bounds is not null)
             {
-                NetTopologySuite.Geometries.Coordinate minCoordinate = new(Convert.ToDouble(e.bounds.minlon), Convert.ToDouble(e.bounds.minlat));
-                NetTopologySuite.Geometries.Coordinate maxCoordinate = new(Convert.ToDouble(e.bounds.maxlon), Convert.ToDouble(e.bounds.maxlat));
-                NetTopologySuite.Geometries.Envelope result = new(minCoordinate, maxCoordinate);
+                Coordinate minCoordinate = new(Convert.ToDouble(e.bounds.minlon), Convert.ToDouble(e.bounds.minlat));
+                Coordinate maxCoordinate = new(Convert.ToDouble(e.bounds.maxlon), Convert.ToDouble(e.bounds.maxlat));
+                Envelope result = new(minCoordinate, maxCoordinate);
                 return result;
             }
 
@@ -185,8 +170,7 @@ namespace OverPass.Utility
                 else
                     foreach (var item in b)
                     {
-                        List<OTag>? value = null;
-                        bool keyExists = a!.TryGetValue(item.Key, out value);
+                        bool keyExists = a!.TryGetValue(item.Key, out List<OTag>? value);
                         if (!keyExists)
                             a.Add(item.Key, new());
                         if (item.Value != null)

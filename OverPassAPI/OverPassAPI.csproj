@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>OverPassAPI</PackageId>
-    <PackageVersion>1.0.9</PackageVersion>
+    <PackageVersion>1.1.0</PackageVersion>
     <PackageLicenseExpression>
         MS-PL
     </PackageLicenseExpression>
@@ -18,7 +18,6 @@
     <Copyright>
         Copyright® 2023 Giuseppe Zileni
     </Copyright>
-    <ReleaseVersion>1.0.9</ReleaseVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -31,8 +30,13 @@
     <None Remove="OsmSharp.Geo" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NetTopologySuite.IO.GeoJSON" Version="3.0.0" />
-    <PackageReference Include="NetTopologySuite.Features" Version="2.1.0" />
     <PackageReference Include="ProjNet" Version="2.0.0" />
+    <PackageReference Include="GeoJSON.Net" Version="1.2.19" />
+    <PackageReference Include="NetTopologySuite.IO.GeoJSON" Version="3.0.0" />
+    <PackageReference Include="NetTopologySuite.IO.GeoJSON4STJ" Version="3.0.0" />
+    <PackageReference Include="NetTopologySuite" Version="2.5.0" />
+    <PackageReference Include="NetTopologySuite.Core" Version="1.15.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="GeoJSON" Version="2.3.1" />
   </ItemGroup>
 </Project>

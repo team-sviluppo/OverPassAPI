@@ -1,14 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
-using NetTopologySuite.IO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using OverPass.Utility;
 
 namespace OverPass
@@ -22,7 +14,10 @@ namespace OverPass
         public Dictionary<string, List<string>>? Query;
         public TagType Type { get; set; } = TagType.ALL;
         public Dictionary<TagType, List<OTag>>? Tags;
-        public NetTopologySuite.Geometries.Geometry? Filter { get; set; }
+        private NetTopologySuite.Geometries.Geometry? filter;
+        private Geometry? geometry;
+
+        public NetTopologySuite.Geometries.Geometry? Filter { get => filter; set => filter = value; }
         public List<OTag> AllTags { get; set; } = new List<OTag>();
         public bool ToWebMercator { get; set; } = false;
         public double Buffer { get; set; } = 10.0; /** meters */
@@ -33,11 +28,16 @@ namespace OverPass
         public OverPass(NetTopologySuite.Geometries.Geometry filter)
         {
             this.Filter = filter;
-            NetTopologySuite.Geometries.Envelope Env = filter.EnvelopeInternal;
+            Envelope Env = filter.EnvelopeInternal;
             this.BBox = String.Format(CultureInfo.GetCultureInfo("en-US"), "{0},{1},{2},{3}", Env.MinY, Env.MinX, Env.MaxY, Env.MaxX);
         }
 
         public OverPass(NetTopologySuite.Geometries.Geometry filter, Dictionary<string, List<string>>? query) : this(filter) => this.Query = query;
+
+        public OverPass(Geometry geometry)
+        {
+            this.geometry = geometry;
+        }
 
         public void BaseUrl(string overpassUrl)
         {
@@ -54,7 +54,7 @@ namespace OverPass
                 else
                     return 4326;
             }
-        } 
+        }
 
         /**
          * Get List of tag query
@@ -87,17 +87,18 @@ namespace OverPass
             }
         }
 
-        
+
 
         public Dictionary<TagType, List<OTag>>? AllTagsDictonary
         {
-            get {
+            get
+            {
                 return new()
                 {
                     { this.Type, this.AllTags }
                 };
             }
-            
+
         }
 
         private string? GetBody()
@@ -144,7 +145,7 @@ namespace OverPass
         }
 
         /** create geometries */
-        public virtual async Task<List<NetTopologySuite.Features.Feature>?> Features()
+        public virtual async Task<List<Feature>?> Features()
         {
             Root? resp = await this.Response();
             if (resp is not null)
@@ -155,22 +156,22 @@ namespace OverPass
                 List<Element> lines = ways.Where(e =>
                 {
                     /** create array coordinates */
-                    NetTopologySuite.Geometries.Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
-                    NetTopologySuite.Geometries.LineString line = new(coordinates);
+                    Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
+                    LineString line = new(coordinates);
                     return !line.IsClosed;
                 }).ToList();
 
                 List<Element> polys = ways.Except(lines).ToList();
 
                 /** get all points */
-                List<NetTopologySuite.Features.Feature>? features = nodes.Select(e =>
+                List<Feature>? features = nodes.Select(e =>
                 {
                     GeometryFactory gf = OverPassUtility.CreateGeometryFactory(this.SRCode);
-                    NetTopologySuite.Features.Feature? f = new();
+                    Feature? f = new();
                     AttributesTable properties = OverPassUtility.GetProperties(e);
                     f.Attributes = properties;
                     double[]? coords = new double[] { Convert.ToDouble(e.lon), Convert.ToDouble(e.lat) };
-                    NetTopologySuite.Geometries.Point geom = (NetTopologySuite.Geometries.Point)new(OverPassUtility.GetPoint(coords, this.ToWebMercator));
+                    Point geom = (NetTopologySuite.Geometries.Point)new(OverPassUtility.GetPoint(coords, this.ToWebMercator));
                     f.Geometry = gf.CreateGeometry(geom);
                     return f;
                 }).ToList();
@@ -183,8 +184,8 @@ namespace OverPass
                     AttributesTable properties = OverPassUtility.GetProperties(e);
                     f.Attributes = properties;
                     /** create array coordinates */
-                    NetTopologySuite.Geometries.Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
-                    NetTopologySuite.Geometries.LineString line = new(coordinates);
+                    Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
+                    LineString line = new(coordinates);
                     f.Geometry = gf.CreateGeometry(line);
                     f.BoundingBox = OverPassUtility.GetBBox(e);
                     return f;
@@ -197,9 +198,9 @@ namespace OverPass
                     AttributesTable properties = OverPassUtility.GetProperties(e);
                     f.Attributes = properties;
                     /** create array coordinates */
-                    NetTopologySuite.Geometries.Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
-                    NetTopologySuite.Geometries.LinearRing lineRing = new(coordinates);
-                    NetTopologySuite.Geometries.Polygon poly = new(lineRing);
+                    Coordinate[]? coordinates = OverPassUtility.GetCoordinates(e, this.ToWebMercator);
+                    LinearRing lineRing = new(coordinates);
+                    Polygon poly = new(lineRing);
                     f.Geometry = gf.CreateGeometry(poly);
                     f.BoundingBox = OverPassUtility.GetBBox(e);
                     return f;

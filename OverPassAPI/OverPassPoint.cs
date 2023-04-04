@@ -1,9 +1,4 @@
-﻿using NetTopologySuite.Features;
-using NetTopologySuite.IO;
-using Newtonsoft.Json;
-using OverPass.Utility;
-
-namespace OverPass
+﻿namespace OverPass
 {
     public class OverPassPoint : OverPass
     {
