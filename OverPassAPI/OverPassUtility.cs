@@ -206,8 +206,8 @@ namespace OverPass.Utility
 
             try
             {
-                string? r = await OverPassUtility.RunOverPassQuery(url, q);
-                return OverPassUtility.JSonDeserializeResponse(r!);
+                string? r = await RunOverPassQuery(url, q);
+                return JSonDeserializeResponse(r!);
             }
             catch (Exception e)
             {
